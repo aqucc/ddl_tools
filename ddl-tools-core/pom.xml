@@ -33,5 +33,67 @@
       <artifactId>assertj-core</artifactId>
       <scope>test</scope>
     </dependency>
+
+    <!-- 実DB結合テスト(src/test/java/.../it/*IT.java)専用。通常のunit testでは使用しない。
+         mvn test では *IT.java は既定のsurefire命名規則(*Test.java等)に一致しないため実行されず、
+         これらの依存も未使用のままビルドに影響しない。 -->
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>postgresql</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>oracle-free</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>42.7.3</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.oracle.database.jdbc</groupId>
+      <artifactId>ojdbc8</artifactId>
+      <version>19.20.0.0</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
+
+  <profiles>
+    <!-- 実DB(Docker/Testcontainers)を使った結合テスト用プロファイル。
+         `mvn verify -Pit` またはCIでのみ有効化する。通常の `mvn test` / `mvn package` では
+         このプロファイルは有効化されず、failsafeも実行されない。 -->
+    <profile>
+      <id>it</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>integration-test</id>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+                <configuration>
+                  <includes>
+                    <include>**/*IT.java</include>
+                  </includes>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

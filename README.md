@@ -48,5 +48,6 @@ ddl-tools gen-data --in ./metadata.json --rows 20 --seed 1 --out ./testdata
 | [docs/cli.md](docs/cli.md) | 共通の接続オプション、5コマンドの全オプション・使用例、`DDLTOOLS_PASSWORD` |
 | [docs/library.md](docs/library.md) | ライブラリとしての使用例(Javaコード) |
 | [docs/test-data.md](docs/test-data.md) | テストデータ生成の仕様 |
+| [docs/integration-tests.md](docs/integration-tests.md) | Testcontainersによる実DB結合テストの実行方法 |
 | [docs/limitations.md](docs/limitations.md) | 制限事項 |
 | [examples/](examples/README.md) | 元DDL→メタ情報JSON→テストデータの実生成サンプル |
