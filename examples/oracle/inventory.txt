@@ -1,0 +1,17 @@
+SCHEMA  TYPE               NAME            DETAIL
+------  -----------------  --------------  ------
+HR      TABLE              DEPT            3 columns
+HR      TABLE              EMP             9 columns
+HR      INDEX              IX_EMP_EMAIL    UNIQUE ON EMP
+HR      INDEX              IX_EMP_DEPT     ON EMP
+HR      VIEW               V_EMP_DEPT      
+HR      MATERIALIZED VIEW  MV_DEPT_SALARY  
+HR      TRIGGER            TRG_EMP_UPD     ON EMP
+HR      PROCEDURE          RAISE_SALARY    2 args
+HR      FUNCTION           GET_DEPT_NAME   1 args -> VARCHAR2
+HR      SEQUENCE           EMP_SEQ         
+HR      SYNONYM            EMPLOYEES       FOR HR.EMP
+HR      PACKAGE            EMP_PKG         spec+body
+HR      TYPE               ADDR_TYPE       
+
+Total: 13 objects (TABLE: 2, INDEX: 2, VIEW: 1, MATERIALIZED VIEW: 1, TRIGGER: 1, PROCEDURE: 1, FUNCTION: 1, SEQUENCE: 1, SYNONYM: 1, PACKAGE: 1, TYPE: 1)

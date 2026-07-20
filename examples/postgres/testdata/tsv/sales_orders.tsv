@@ -1,0 +1,6 @@
+customer_id	order_date	amount	status	note
+1	2024-08-30	939.75	NEW	theta
+2	2024-07-02	271.93	SHIPPED	alpha
+3	2024-09-22	257.13	PAID	theta
+4	2024-08-17	275.52	PAID	iota
+5	2024-05-19	837.75	NEW	delta

@@ -1,0 +1,183 @@
+{
+  "formatVersion" : "1.0",
+  "dialect" : "ORACLE",
+  "extractedAt" : "2026-01-01T00:00:00Z",
+  "schemas" : [ {
+    "name" : "HR",
+    "tables" : [ {
+      "name" : "DEPT",
+      "columns" : [ {
+        "name" : "DEPT_ID",
+        "typeName" : "NUMBER",
+        "precision" : 4,
+        "nullable" : false
+      }, {
+        "name" : "DEPT_NAME",
+        "typeName" : "VARCHAR2",
+        "length" : 30,
+        "nullable" : false
+      }, {
+        "name" : "LOCATION",
+        "typeName" : "VARCHAR2",
+        "length" : 20,
+        "nullable" : true
+      } ],
+      "primaryKey" : {
+        "name" : "PK_DEPT",
+        "columns" : [ "DEPT_ID" ]
+      },
+      "foreignKeys" : [ ],
+      "uniqueConstraints" : [ {
+        "name" : "UQ_DEPT_NAME",
+        "columns" : [ "DEPT_NAME" ]
+      } ],
+      "checkConstraints" : [ ],
+      "indexes" : [ ]
+    }, {
+      "name" : "EMP",
+      "comment" : "従業員",
+      "columns" : [ {
+        "name" : "EMP_ID",
+        "typeName" : "NUMBER",
+        "precision" : 6,
+        "nullable" : false
+      }, {
+        "name" : "EMP_NAME",
+        "typeName" : "VARCHAR2",
+        "length" : 50,
+        "nullable" : false,
+        "comment" : "氏名"
+      }, {
+        "name" : "EMAIL",
+        "typeName" : "VARCHAR2",
+        "length" : 100,
+        "nullable" : true
+      }, {
+        "name" : "SALARY",
+        "typeName" : "NUMBER",
+        "precision" : 10,
+        "scale" : 2,
+        "nullable" : false,
+        "defaultValue" : "0"
+      }, {
+        "name" : "STATUS",
+        "typeName" : "VARCHAR2",
+        "length" : 10,
+        "nullable" : false,
+        "defaultValue" : "'ACTIVE'"
+      }, {
+        "name" : "HIRE_DATE",
+        "typeName" : "DATE",
+        "nullable" : false
+      }, {
+        "name" : "UPDATED_AT",
+        "typeName" : "TIMESTAMP",
+        "precision" : 6,
+        "nullable" : true
+      }, {
+        "name" : "DEPT_ID",
+        "typeName" : "NUMBER",
+        "precision" : 4,
+        "nullable" : false
+      }, {
+        "name" : "MEMO",
+        "typeName" : "CLOB",
+        "nullable" : true
+      } ],
+      "primaryKey" : {
+        "name" : "PK_EMP",
+        "columns" : [ "EMP_ID" ]
+      },
+      "foreignKeys" : [ {
+        "name" : "FK_EMP_DEPT",
+        "columns" : [ "DEPT_ID" ],
+        "referencedSchema" : "HR",
+        "referencedTable" : "DEPT",
+        "referencedColumns" : [ "DEPT_ID" ]
+      } ],
+      "uniqueConstraints" : [ {
+        "name" : "IX_EMP_EMAIL",
+        "columns" : [ "EMAIL" ]
+      } ],
+      "checkConstraints" : [ {
+        "name" : "CK_EMP_STATUS",
+        "expression" : "status IN ('ACTIVE', 'RETIRED', 'LEAVE')"
+      }, {
+        "name" : "CK_EMP_SALARY",
+        "expression" : "salary >= 0"
+      } ],
+      "indexes" : [ {
+        "name" : "IX_EMP_EMAIL",
+        "unique" : true,
+        "columns" : [ "EMAIL" ]
+      }, {
+        "name" : "IX_EMP_DEPT",
+        "unique" : false,
+        "columns" : [ "DEPT_ID" ]
+      } ]
+    } ],
+    "views" : [ {
+      "name" : "V_EMP_DEPT",
+      "columns" : [ ],
+      "definitionSql" : "SELECT e.emp_id, e.emp_name, e.salary, d.dept_name\nFROM hr.emp e\nJOIN hr.dept d ON e.dept_id = d.dept_id\nWHERE e.status = 'ACTIVE'"
+    } ],
+    "materializedViews" : [ {
+      "name" : "MV_DEPT_SALARY",
+      "columns" : [ ],
+      "definitionSql" : "SELECT d.dept_id, d.dept_name, SUM(e.salary) AS total_salary\nFROM hr.emp e JOIN hr.dept d ON e.dept_id = d.dept_id\nGROUP BY d.dept_id, d.dept_name"
+    } ],
+    "triggers" : [ {
+      "name" : "TRG_EMP_UPD",
+      "timing" : "BEFORE",
+      "events" : [ "INSERT", "UPDATE" ],
+      "targetTable" : "EMP",
+      "level" : "ROW",
+      "body" : "CREATE OR REPLACE TRIGGER hr.trg_emp_upd\nBEFORE INSERT OR UPDATE ON hr.emp\nFOR EACH ROW\nBEGIN\n  :NEW.updated_at := SYSTIMESTAMP;\nEND;"
+    } ],
+    "routines" : [ {
+      "name" : "RAISE_SALARY",
+      "routineType" : "PROCEDURE",
+      "parameters" : [ {
+        "name" : "P_EMP_ID",
+        "direction" : "IN",
+        "typeName" : "NUMBER"
+      }, {
+        "name" : "P_AMOUNT",
+        "direction" : "INOUT",
+        "typeName" : "NUMBER"
+      } ],
+      "sourceText" : "CREATE OR REPLACE PROCEDURE hr.raise_salary (\n  p_emp_id IN NUMBER,\n  p_amount IN OUT NUMBER\n) AS\nBEGIN\n  UPDATE hr.emp SET salary = salary + p_amount WHERE emp_id = p_emp_id;\n  SELECT salary INTO p_amount FROM hr.emp WHERE emp_id = p_emp_id;\nEND raise_salary;"
+    }, {
+      "name" : "GET_DEPT_NAME",
+      "routineType" : "FUNCTION",
+      "parameters" : [ {
+        "name" : "P_DEPT_ID",
+        "direction" : "IN",
+        "typeName" : "NUMBER"
+      } ],
+      "returnType" : "VARCHAR2",
+      "sourceText" : "CREATE OR REPLACE FUNCTION hr.get_dept_name (p_dept_id IN NUMBER) RETURN VARCHAR2 IS\n  v_name VARCHAR2(30);\nBEGIN\n  SELECT dept_name INTO v_name FROM hr.dept WHERE dept_id = p_dept_id;\n  RETURN v_name;\nEND;"
+    } ],
+    "sequences" : [ {
+      "name" : "EMP_SEQ",
+      "startValue" : 1,
+      "incrementBy" : 1,
+      "cycle" : false
+    } ],
+    "synonyms" : [ {
+      "name" : "EMPLOYEES",
+      "targetSchema" : "HR",
+      "targetName" : "EMP"
+    } ],
+    "packages" : [ {
+      "name" : "EMP_PKG",
+      "specSource" : "CREATE OR REPLACE PACKAGE hr.emp_pkg AS\n  PROCEDURE hire (p_name IN VARCHAR2);\n  FUNCTION head_count RETURN NUMBER;\nEND emp_pkg;",
+      "bodySource" : "CREATE OR REPLACE PACKAGE BODY hr.emp_pkg AS\n  PROCEDURE hire (p_name IN VARCHAR2) IS\n  BEGIN\n    INSERT INTO hr.emp (emp_id, emp_name, hire_date, dept_id)\n    VALUES (hr.emp_seq.NEXTVAL, p_name, SYSDATE, 10);\n  END hire;\n  FUNCTION head_count RETURN NUMBER IS\n    v_count NUMBER;\n  BEGIN\n    SELECT COUNT(*) INTO v_count FROM hr.emp;\n    RETURN v_count;\n  END head_count;\nEND emp_pkg;"
+    } ],
+    "others" : [ {
+      "name" : "ADDR_TYPE",
+      "objectType" : "TYPE",
+      "ddlText" : "CREATE TYPE hr.addr_type AS OBJECT (street VARCHAR2(50), city VARCHAR2(30));"
+    } ]
+  } ]
+}

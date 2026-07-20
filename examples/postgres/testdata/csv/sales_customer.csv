@@ -1,0 +1,6 @@
+customer_id,name,email,age,vip,created_at
+1,alpha,email_1,,false,2024-01-31T13:05:38
+2,kappa,email_2,,false,2024-06-25T12:56:32
+3,eta,email_3,27,true,2024-12-09T02:33:23
+4,beta,email_4,105,false,2024-10-02T12:50:05
+5,theta,email_5,111,true,2024-01-30T11:25:23

@@ -1,0 +1,18 @@
+SCHEMA  TYPE               NAME                DETAIL
+------  -----------------  ------------------  ------
+public  TRIGGER            trg_orders_before   ON orders
+public  SCHEMA             sales               
+public  EXTENSION          pg_trgm             
+sales   TABLE              customer            6 columns
+sales   INDEX              ux_customer_email   UNIQUE ON customer
+sales   TABLE              orders              6 columns
+sales   INDEX              ix_orders_customer  ON orders
+sales   VIEW               v_customer_orders   
+sales   MATERIALIZED VIEW  mv_customer_total   
+sales   FUNCTION           order_total         1 args -> numeric
+sales   FUNCTION           trg_orders_stamp    0 args -> trigger
+sales   PROCEDURE          cancel_order        1 args
+sales   SEQUENCE           order_seq           
+sales   DOMAIN             email_addr          
+
+Total: 14 objects (TRIGGER: 1, SCHEMA: 1, EXTENSION: 1, TABLE: 2, INDEX: 2, VIEW: 1, MATERIALIZED VIEW: 1, FUNCTION: 2, PROCEDURE: 1, SEQUENCE: 1, DOMAIN: 1)

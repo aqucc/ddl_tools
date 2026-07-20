@@ -1,0 +1,191 @@
+{
+  "formatVersion" : "1.0",
+  "dialect" : "POSTGRESQL",
+  "extractedAt" : "2026-01-01T00:00:00Z",
+  "schemas" : [ {
+    "name" : "public",
+    "tables" : [ ],
+    "views" : [ ],
+    "materializedViews" : [ ],
+    "triggers" : [ {
+      "name" : "trg_orders_before",
+      "timing" : "BEFORE",
+      "events" : [ "INSERT", "UPDATE" ],
+      "targetTable" : "orders",
+      "level" : "ROW",
+      "body" : "CREATE TRIGGER trg_orders_before\nBEFORE INSERT OR UPDATE ON sales.orders\nFOR EACH ROW EXECUTE FUNCTION sales.trg_orders_stamp()"
+    } ],
+    "routines" : [ ],
+    "sequences" : [ ],
+    "synonyms" : [ ],
+    "packages" : [ ],
+    "others" : [ {
+      "name" : "sales",
+      "objectType" : "SCHEMA",
+      "ddlText" : "-- PostgreSQL sample DDL for tests\nCREATE SCHEMA sales"
+    }, {
+      "name" : "pg_trgm",
+      "objectType" : "EXTENSION",
+      "ddlText" : "CREATE EXTENSION IF NOT EXISTS pg_trgm"
+    } ]
+  }, {
+    "name" : "sales",
+    "tables" : [ {
+      "name" : "customer",
+      "columns" : [ {
+        "name" : "customer_id",
+        "typeName" : "BIGINT",
+        "nullable" : false
+      }, {
+        "name" : "name",
+        "typeName" : "VARCHAR",
+        "length" : 50,
+        "nullable" : false
+      }, {
+        "name" : "email",
+        "typeName" : "TEXT",
+        "nullable" : true
+      }, {
+        "name" : "age",
+        "typeName" : "INTEGER",
+        "nullable" : true
+      }, {
+        "name" : "vip",
+        "typeName" : "BOOLEAN",
+        "nullable" : false,
+        "defaultValue" : "false"
+      }, {
+        "name" : "created_at",
+        "typeName" : "TIMESTAMP",
+        "precision" : 0,
+        "nullable" : false,
+        "defaultValue" : "now ()"
+      } ],
+      "primaryKey" : {
+        "name" : "pk_customer",
+        "columns" : [ "customer_id" ]
+      },
+      "foreignKeys" : [ ],
+      "uniqueConstraints" : [ {
+        "name" : "ux_customer_email",
+        "columns" : [ "email" ]
+      } ],
+      "checkConstraints" : [ {
+        "expression" : "age >= 18"
+      } ],
+      "indexes" : [ {
+        "name" : "ux_customer_email",
+        "unique" : true,
+        "columns" : [ "email" ]
+      } ]
+    }, {
+      "name" : "orders",
+      "comment" : "注文",
+      "columns" : [ {
+        "name" : "order_id",
+        "typeName" : "BIGSERIAL",
+        "nullable" : false,
+        "identity" : true
+      }, {
+        "name" : "customer_id",
+        "typeName" : "BIGINT",
+        "nullable" : false
+      }, {
+        "name" : "order_date",
+        "typeName" : "DATE",
+        "nullable" : false
+      }, {
+        "name" : "amount",
+        "typeName" : "NUMERIC",
+        "precision" : 12,
+        "scale" : 2,
+        "nullable" : false,
+        "comment" : "注文金額"
+      }, {
+        "name" : "status",
+        "typeName" : "VARCHAR",
+        "length" : 10,
+        "nullable" : false,
+        "defaultValue" : "'NEW'"
+      }, {
+        "name" : "note",
+        "typeName" : "TEXT",
+        "nullable" : true
+      } ],
+      "primaryKey" : {
+        "name" : "pk_orders",
+        "columns" : [ "order_id" ]
+      },
+      "foreignKeys" : [ {
+        "name" : "fk_orders_customer",
+        "columns" : [ "customer_id" ],
+        "referencedSchema" : "sales",
+        "referencedTable" : "customer",
+        "referencedColumns" : [ "customer_id" ]
+      } ],
+      "uniqueConstraints" : [ ],
+      "checkConstraints" : [ {
+        "name" : "ck_orders_status",
+        "expression" : "status IN ('NEW', 'PAID', 'SHIPPED')"
+      }, {
+        "name" : "ck_orders_amount",
+        "expression" : "amount BETWEEN 0 AND 99999999"
+      } ],
+      "indexes" : [ {
+        "name" : "ix_orders_customer",
+        "unique" : false,
+        "columns" : [ "customer_id" ]
+      } ]
+    } ],
+    "views" : [ {
+      "name" : "v_customer_orders",
+      "columns" : [ ],
+      "definitionSql" : "SELECT c.customer_id, c.name, o.order_id, o.amount\nFROM sales.customer c\nJOIN sales.orders o ON c.customer_id = o.customer_id\nWHERE o.status <> 'NEW'"
+    } ],
+    "materializedViews" : [ {
+      "name" : "mv_customer_total",
+      "columns" : [ ],
+      "definitionSql" : "SELECT c.customer_id, c.name, sum(o.amount) AS total_amount\nFROM sales.customer c JOIN sales.orders o ON c.customer_id = o.customer_id\nGROUP BY c.customer_id, c.name"
+    } ],
+    "triggers" : [ ],
+    "routines" : [ {
+      "name" : "order_total",
+      "routineType" : "FUNCTION",
+      "parameters" : [ {
+        "name" : "p_customer_id",
+        "direction" : "IN",
+        "typeName" : "bigint"
+      } ],
+      "returnType" : "numeric",
+      "sourceText" : "CREATE OR REPLACE FUNCTION sales.order_total(p_customer_id bigint) RETURNS numeric AS $$\nDECLARE\n  v_total numeric;\nBEGIN\n  SELECT COALESCE(sum(amount), 0) INTO v_total FROM sales.orders WHERE customer_id = p_customer_id;\n  RETURN v_total;\nEND;\n$$ LANGUAGE plpgsql"
+    }, {
+      "name" : "trg_orders_stamp",
+      "routineType" : "FUNCTION",
+      "parameters" : [ ],
+      "returnType" : "trigger",
+      "sourceText" : "CREATE OR REPLACE FUNCTION sales.trg_orders_stamp() RETURNS trigger AS $$\nBEGIN\n  NEW.order_date := COALESCE(NEW.order_date, CURRENT_DATE);\n  RETURN NEW;\nEND;\n$$ LANGUAGE plpgsql"
+    }, {
+      "name" : "cancel_order",
+      "routineType" : "PROCEDURE",
+      "parameters" : [ {
+        "name" : "p_order_id",
+        "direction" : "IN",
+        "typeName" : "bigint"
+      } ],
+      "sourceText" : "CREATE PROCEDURE sales.cancel_order(IN p_order_id bigint) LANGUAGE plpgsql AS $$\nBEGIN\n  UPDATE sales.orders SET status = 'NEW' WHERE order_id = p_order_id;\nEND;\n$$"
+    } ],
+    "sequences" : [ {
+      "name" : "order_seq",
+      "startValue" : 1000,
+      "incrementBy" : 1,
+      "cycle" : false
+    } ],
+    "synonyms" : [ ],
+    "packages" : [ ],
+    "others" : [ {
+      "name" : "email_addr",
+      "objectType" : "DOMAIN",
+      "ddlText" : "CREATE DOMAIN sales.email_addr AS text CHECK (VALUE ~ '@')"
+    } ]
+  } ]
+}
