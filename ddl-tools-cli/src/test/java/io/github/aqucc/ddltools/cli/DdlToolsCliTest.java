@@ -101,6 +101,36 @@ class DdlToolsCliTest {
     }
 
     @Test
+    void parseSearchesSqlFilesRecursivelyUnderDirectory() throws Exception {
+        Path root = tempDir.resolve("ddlroot");
+        Path tables = root.resolve("tables");
+        Path views = root.resolve("nested/views");
+        Files.createDirectories(tables);
+        Files.createDirectories(views);
+        Files.write(tables.resolve("01_dept.sql"),
+                ("CREATE TABLE dept (dept_id NUMBER(4) NOT NULL, dept_name VARCHAR2(30),"
+                        + " CONSTRAINT pk_dept PRIMARY KEY (dept_id));")
+                        .getBytes(StandardCharsets.UTF_8));
+        Files.write(tables.resolve("02_emp.sql"),
+                ("CREATE TABLE emp (emp_id NUMBER(6) NOT NULL, dept_id NUMBER(4),"
+                        + " CONSTRAINT pk_emp PRIMARY KEY (emp_id));")
+                        .getBytes(StandardCharsets.UTF_8));
+        // 2階層以上ネストしたディレクトリに置いても解析対象になることを確認する
+        Files.write(views.resolve("emp_view.sql"),
+                "CREATE VIEW emp_view AS SELECT emp_id FROM emp;".getBytes(StandardCharsets.UTF_8));
+
+        Path jsonFile = tempDir.resolve("metadata.json");
+        int exitCode = execute("parse",
+                "--in", root.toString(),
+                "--dialect", "oracle",
+                "--out", jsonFile.toString());
+
+        assertThat(exitCode).isEqualTo(0);
+        String json = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
+        assertThat(json).contains("\"DEPT\"").contains("\"EMP\"").contains("\"EMP_VIEW\"");
+    }
+
+    @Test
     void listWithCsvFormatContainsTableNames() throws Exception {
         Path ddlFile = writeSampleDdl();
         Path jsonFile = tempDir.resolve("metadata.json");

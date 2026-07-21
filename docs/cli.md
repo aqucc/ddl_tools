@@ -64,7 +64,7 @@ ddl-tools extract --config oracle.properties --out ./metadata.json
 # 単一ファイル
 ddl-tools parse --in ./schema.sql --dialect postgres --out ./metadata.json
 
-# ディレクトリ (直下の *.sql を名前順に連結して解析)
+# ディレクトリ (配下のサブディレクトリを含む *.sql をパス名順に連結して解析)
 ddl-tools parse --in ./sql --dialect oracle --default-schema HR --out ./metadata.json
 ```
 
