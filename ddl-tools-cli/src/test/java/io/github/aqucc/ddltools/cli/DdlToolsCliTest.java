@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -52,12 +53,14 @@ class DdlToolsCliTest {
     private ByteArrayOutputStream capturedOut;
 
     @BeforeEach
-    void redirectStreams() {
+    void redirectStreams() throws UnsupportedEncodingException {
         originalOut = System.out;
         originalErr = System.err;
         capturedOut = new ByteArrayOutputStream();
-        System.setOut(new PrintStream(capturedOut, true, StandardCharsets.UTF_8));
-        System.setErr(new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8));
+        // PrintStream(OutputStream, boolean, Charset) はJava 10以降のため、
+        // Java 8互換のエンコーディング名(String)を取る版を使う。
+        System.setOut(new PrintStream(capturedOut, true, StandardCharsets.UTF_8.name()));
+        System.setErr(new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8.name()));
     }
 
     @AfterEach

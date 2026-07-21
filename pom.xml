@@ -103,4 +103,22 @@
       </plugins>
     </pluginManagement>
   </build>
+
+  <profiles>
+    <!-- JDK 9以降でビルドする場合のみ maven.compiler.release=8 を有効化し、
+         main/testコードともにJava 8のAPIだけにコンパイルを制限する。これにより
+         新しいJDK上でビルドしてもJava 8に存在しないAPI
+         (例: PrintStream(OutputStream, boolean, Charset))をコンパイル時に検出できる。
+         JDK 8でビルドする場合はこのプロファイルは無効化され、source/target 1.8 の
+         設定がそのまま使われる(compiler.release はJDK 9以降専用のため)。 -->
+    <profile>
+      <id>jdk9plus-release8</id>
+      <activation>
+        <jdk>[9,)</jdk>
+      </activation>
+      <properties>
+        <maven.compiler.release>8</maven.compiler.release>
+      </properties>
+    </profile>
+  </profiles>
 </project>
